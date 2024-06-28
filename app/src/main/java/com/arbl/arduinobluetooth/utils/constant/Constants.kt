@@ -21,4 +21,5 @@ object Constants {
     const val stateListen               : Int               = 1
     const val stateConnecting           : Int               = 2
     const val stateConnected            : Int               = 3
+    const val stateReconnect            : Int               = 4
 }

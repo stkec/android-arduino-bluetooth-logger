@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import com.arbl.arduinobluetooth.utils.constant.Constants;
 
@@ -26,6 +27,8 @@ public class BluetoothUtils {
     private int state;
     private boolean term = false;
     public boolean isConnect = false;
+
+    public int status = 0;
 
     private final UUID appUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
@@ -74,6 +77,8 @@ public class BluetoothUtils {
     }
 
     public void connect(BluetoothDevice device) {
+        status++;
+
         if (state == Constants.stateConnecting) {
             connectThread.cancel();
             connectThread = null;
@@ -239,6 +244,7 @@ public class BluetoothUtils {
         term = false;
         isConnect = false;
         BluetoothUtils.this.start();
+        reconnect();
     }
 
     private synchronized void connectionFailed() {
@@ -250,6 +256,7 @@ public class BluetoothUtils {
         term = false;
         isConnect = false;
         BluetoothUtils.this.start();
+        reconnect();
     }
 
     @SuppressLint("MissingPermission")
@@ -270,6 +277,8 @@ public class BluetoothUtils {
         message.setData(bundle);
         handler.sendMessage(message);
         setState(Constants.stateConnected);
+
+        status = 0;
     }
 
     public void write(byte[] buffer) {
@@ -281,5 +290,12 @@ public class BluetoothUtils {
             connThread = connectedThread;
         }
         connThread.write(buffer);
+    }
+
+    private void reconnect() {
+        status--;
+        if (status < 0) {
+            status = 0;
+        }
     }
 }

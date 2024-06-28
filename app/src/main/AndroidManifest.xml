@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
         android:name="com.arbl.arduinobluetooth.core.base.application.BaseApplication"
@@ -17,6 +18,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ArduinoBluetooth">
+
+        <service
+            android:name="com.arbl.arduinobluetooth.utils.bluetooth.ForegroundService"
+            android:foregroundServiceType="connectedDevice"
+            android:exported="false"
+            android:process=":externalProcess"
+            >
+        </service>
+
+
         <activity
             android:name="com.arbl.arduinobluetooth.ui.main.MainActivity"
             android:exported="true"

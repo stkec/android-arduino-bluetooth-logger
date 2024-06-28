@@ -18,22 +18,23 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.arbl.arduinobluetooth.ui.adapter.PagerAdapter
-import com.arbl.arduinobluetooth.utils.constant.Constants
-import com.arbl.arduinobluetooth.databinding.ActivityMainBinding
-import com.arbl.arduinobluetooth.utils.bluetooth.BluetoothUtils
-import com.google.android.material.tabs.TabLayoutMediator
 import com.arbl.arduinobluetooth.R
 import com.arbl.arduinobluetooth.core.domain.model.ListModel
 import com.arbl.arduinobluetooth.core.domain.model.PairedModel
+import com.arbl.arduinobluetooth.databinding.ActivityMainBinding
+import com.arbl.arduinobluetooth.ui.adapter.PagerAdapter
 import com.arbl.arduinobluetooth.ui.main.dialog.DialogCommand
 import com.arbl.arduinobluetooth.ui.main.dialog.DialogPaired
+import com.arbl.arduinobluetooth.utils.bluetooth.BluetoothUtils
+import com.arbl.arduinobluetooth.utils.constant.Constants
 import com.arbl.arduinobluetooth.utils.constant.Constants.TAB_TITLES
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
     private var _binding: ActivityMainBinding? = null
@@ -48,6 +49,19 @@ class MainActivity : AppCompatActivity() {
     private var connectedDevice : String = ""
     private var backPressedTime : Long = 0
 
+    private val handler = Handler(Looper.getMainLooper())
+    private var reconnect: java.lang.Runnable = object : java.lang.Runnable {
+        override fun run() {
+            try {
+                if (bluetoothUtils.status == 0) {
+                    autoConnectATACMS()
+                }
+            } finally {
+                handler.postDelayed(this, 3000)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?){
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
@@ -58,6 +72,9 @@ class MainActivity : AppCompatActivity() {
         showTab()
         initClickListener()
         initObserver()
+        if (savedInstanceState == null) {
+            handler.postDelayed(reconnect, 3000)
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -154,6 +171,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("MissingPermission")
+    private fun autoConnectATACMS() {
+        if (!isBluetoothPermissionNotGranted()
+            && bluetoothAdapter.isEnabled
+            && !bluetoothUtils.isConnect
+        ) {
+            val pairedDevices : Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
+            if(pairedDevices.isNotEmpty()){
+                for (device in pairedDevices) {
+                    if (device.name == "HC-05") {
+                        bluetoothUtils.connect(bluetoothAdapter.getRemoteDevice(device.address))
+                    }
+                }
+            }
+        }
+    }
+
     fun showDialogAdd(parAdd: Boolean ,listModel: ListModel) {
         DialogCommand(parAdd, listModel).apply {
             setStyle(
@@ -224,7 +258,7 @@ class MainActivity : AppCompatActivity() {
                     val inputBuffer = String(buffer, 0, msg.arg1)
                     dataString += inputBuffer
                     CoroutineScope(Dispatchers.Default).launch {
-                        delay(291)
+                        delay(293)
                         if(dataString.isNotEmpty()){
                             sharedMainViewModel.setReceiveData(dataString)
                             dataString = ""
@@ -242,5 +276,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    companion object {
+        @JvmField
+        var CHANNEL_ID: String = "ForegroundServiceChannel"
     }
 }
