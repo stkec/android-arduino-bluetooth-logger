@@ -11,6 +11,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.*
 import android.provider.Settings.ACTION_BLUETOOTH_SETTINGS
+import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -26,6 +28,7 @@ import com.arbl.arduinobluetooth.ui.adapter.PagerAdapter
 import com.arbl.arduinobluetooth.ui.main.dialog.DialogCommand
 import com.arbl.arduinobluetooth.ui.main.dialog.DialogPaired
 import com.arbl.arduinobluetooth.utils.bluetooth.BluetoothUtils
+import com.arbl.arduinobluetooth.utils.bluetooth.ForegroundService
 import com.arbl.arduinobluetooth.utils.constant.Constants
 import com.arbl.arduinobluetooth.utils.constant.Constants.TAB_TITLES
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -35,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
+
 
 class MainActivity : AppCompatActivity() {
     private var _binding: ActivityMainBinding? = null
@@ -72,9 +76,25 @@ class MainActivity : AppCompatActivity() {
         showTab()
         initClickListener()
         initObserver()
-        if (savedInstanceState == null) {
-            handler.postDelayed(reconnect, 3000)
-        }
+//        if (savedInstanceState == null) {
+////            handler.postDelayed(reconnect, 3000)
+//            val pendingResult = createPendingResult(100, Intent(), 0)
+//            val serviceIntent = Intent(this, ForegroundService::class.java)
+//            serviceIntent.putExtra("pendingIntent", pendingResult)
+//
+////            ContextCompat.startForegroundService(this, serviceIntent)
+//            Log.d("TAG", "START")
+//            println("###################### START ######################")
+//        }
+    }
+
+    fun startService() {
+        val pendingResult = createPendingResult(100, Intent(), 0)
+        val serviceIntent = Intent(this, ForegroundService::class.java)
+        serviceIntent.putExtra("pendingIntent", pendingResult)
+        println("SERVICE")
+        ContextCompat.startForegroundService(this, serviceIntent)
+        println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ SERVICE2")
     }
 
     override fun onRequestPermissionsResult(
@@ -96,6 +116,12 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
+//    private fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//        val mCount = data.getIntExtra(ForegroundService.FOREGROUND_MESSAGE, -1)
+//        if (mShowCount != null) mShowCount.setText(Integer.toString(mCount))
+//    }
+
     override fun onBackPressed() {
         if (backPressedTime + 2000 > System.currentTimeMillis()) {
             super.onBackPressed()
@@ -110,12 +136,19 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         bluetoothUtils.stop()
+
+        val serviceIntent = Intent(this, ForegroundService::class.java)
+        stopService(serviceIntent)
     }
 
     private fun initClickListener() {
         with(binding) {
             appBarLayout.btnBluetooth.setOnClickListener {
                 enableBluetooth()
+            }
+
+            appBarLayout.btnStartService.setOnClickListener {
+                startService()
             }
 
             appBarLayout.btnSetting.setOnClickListener {
