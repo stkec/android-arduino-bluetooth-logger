@@ -39,6 +39,7 @@ class ForegroundService : Service() {
     private var dataString: String = ""
     private var connectedDevice: String = ""
 
+    private var wakeLock: PowerManager.WakeLock? = null
 
     private val handler = Handler(Looper.getMainLooper())
     private var reconnect: java.lang.Runnable = object : java.lang.Runnable {
@@ -54,8 +55,12 @@ class ForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int):Int {
-
-            println("$$$$$$$$$$$$$$$$$$$$$$$$$ SERVICE $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        wakeLock =
+            (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
+                newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LocationService::lock").apply {
+                    acquire(10*1000L)  // 10 seconds
+                }
+            }
 
         createNotificationChannel()
 
@@ -166,6 +171,7 @@ class ForegroundService : Service() {
         Log.d(TAG, "#######     DESTROY")
         super.onDestroy()
         bluetoothUtils.stop()
+        wakeLock?.release()
     }
 
     override fun onBind(intent: Intent): IBinder? {

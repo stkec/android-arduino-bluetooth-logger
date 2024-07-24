@@ -10,11 +10,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.*
+import android.provider.Settings
 import android.provider.Settings.ACTION_BLUETOOTH_SETTINGS
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
@@ -141,6 +143,7 @@ class MainActivity : AppCompatActivity() {
         stopService(serviceIntent)
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     private fun initClickListener() {
         with(binding) {
             appBarLayout.btnBluetooth.setOnClickListener {
@@ -148,7 +151,11 @@ class MainActivity : AppCompatActivity() {
             }
 
             appBarLayout.btnStartService.setOnClickListener {
-                startService()
+                if (!(getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(getPackageName())) {
+                    startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+                } else {
+                    startService()
+                }
             }
 
             appBarLayout.btnSetting.setOnClickListener {
