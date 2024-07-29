@@ -159,7 +159,7 @@ class ForegroundService : Service() {
             val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
             if (pairedDevices.isNotEmpty()) {
                 for (device in pairedDevices) {
-                    if (device.name == "HC-05") {
+                    if (device.name.trim() == "HC-05") {
                         bluetoothUtils.connect(bluetoothAdapter.getRemoteDevice(device.address))
                     }
                 }
